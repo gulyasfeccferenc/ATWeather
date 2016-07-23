@@ -39,14 +39,14 @@ var FeccWeatherModule = {};
    * @param  {type} lon  description
    */
   function getWeatherInfo() {
-    var calling = "https://api.openweathermap.org/data/2.5/weather?lat="
+    var calling = "http://api.openweathermap.org/data/2.5/weather?lat="
     +lat+"&lon="+lon+"&units="
     +(isCelsius?'metric':'imperial')
     +"&appid=8227b9586af3026fcc2675103a7b5940";
 
     $.get(calling, function(response) {
       lastWeather = response.weather[0].main.toLowerCase();
-      actualTemp = respones.main.temp;
+      actualTemp = response.main.temp;
       cacheValues();
       refreshDOM();
     }, "jsonp");
@@ -81,7 +81,7 @@ var FeccWeatherModule = {};
           if (response) {
             location = response.results[1].formatted_address;
             cacheValues();
-            refreshDOM();
+            getWeatherInfo();
           }
         })
       })

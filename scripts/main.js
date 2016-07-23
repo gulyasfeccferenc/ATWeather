@@ -8,6 +8,7 @@ var FeccWeatherModule = {};
       actualTemp,
       lastWeather,
       location,
+      summary,
       isCelsius = true; //metric, imperial
 
 
@@ -16,9 +17,17 @@ var FeccWeatherModule = {};
    *
    */
   function refreshDOM() {
-    $('section').removeClass().addClass(lastWeather.toLowerCase());
+
     $('[data-position]').text(location);
     $('[data-weather-container]').text(Math.floor(getCorrectTemp()) + (isCelsius?' °C':' °F'));
+    $('[data-weather-description]').text(summary);
+    if (lastWeather) {
+      $('section').removeClass().addClass(lastWeather.toLowerCase());
+    } else {
+      $('section').removeClass();
+      $('[data-weather-container]').text('An error occured, please come back later');
+      $('[data-weather-description]').empty();
+    }
   }
 
 
@@ -44,6 +53,7 @@ var FeccWeatherModule = {};
     $.get(calling, function(response) {
       lastWeather = response.currently.icon.toLowerCase();
       actualTemp = (response.currently.temperature - 32) / 1.8;
+      summary = response.currently.summary;
       cacheValues();
       refreshDOM();
     }, "jsonp");
@@ -65,6 +75,7 @@ var FeccWeatherModule = {};
     if (actualTemp) localStorage.setItem('temperature', actualTemp);
     isCached = true;
   }
+
   /**
    * fetchGeoInfo - Try to get locational info than cache it.
    *

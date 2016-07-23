@@ -75,7 +75,7 @@ var FeccWeatherModule = {};
   function fetchGeoInfo() {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(function(pos) {
-        log = pos.coords.latitude;
+        lat = pos.coords.latitude;
         lon = pos.coords.longitude;
         $.get("https://maps.googleapis.com/maps/api/geocode/json?latlng=" + lat + "," + lon, function(response) {
           console.log(response);

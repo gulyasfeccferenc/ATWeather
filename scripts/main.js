@@ -1,95 +1,140 @@
-var lat,
-    lon,
-    units = 'metric';
+var FeccWeatherModule = {};
 
-/**
- * refreshLocation - description
- *
- * @param  {type} location description
- * @return {type}          description
- */
-function refreshLocation(location) {
-  $('[data-position]').text(location);
-}
+(function() {
+  var lat,
+      lon,
+      city,
+      actualTemp = 20,
+      cachedWeather = false,
+      isCelsius = true; //metric, imperial
 
-/**
- * refreshWeather - description
- *
- * @param  {type} temp description
- * @param  {type} unit description
- * @return {type}      description
- */
-function refreshWeather(temp, unit) {
-  var metric = ' °C';
-  if (unit != 'metric') metric = ' F';
-  $('[data-weather-container]').text(Math.floor(temp) + metric);
-}
+  /**
+   * refreshLocation - will refresh the position's text with the
+   * given location
+   *
+   * @param  {string} location description
+   */
+  function refreshLocation(location) {
+    $('[data-position]').text(location);
+  }
 
-
-/**
- * refreshBackground - description
- *
- * @param  {type} weather description
- * @return {type}         description
- */
-function refreshBackground(weather) {
-  //console.log(weather[0].main);
-  $('section').removeClass().addClass(weather[0].main.toLowerCase());
-}
+  /**
+   * refreshWeather - Refresh the current weather output depends on what
+   * unit is selected.
+   *
+   * @param  {string} temp - Actual temperature
+   * @param  {string} unit - metric/imperial
+   */
+  function refreshWeather(temp) {
+    $('[data-weather-container]').text(Math.floor(temp) + (isCelsius?' °C':' °F'));
+  }
 
 
-/**
- * getWeatherInfo - Will fetch the actual weather info and refresh
- *                  the weather and the background when it's done.
- *
- * @param  {type} lat  description
- * @param  {type} lon  description
- * @param  {type} unit description
- */
-function getWeatherInfo(lat, lon, unit) {
-  var calling = "http://api.openweathermap.org/data/2.5/weather?lat="+lat+"&lon="+lon+"&units="+unit+"&appid=8227b9586af3026fcc2675103a7b5940";
-
-  $.get(calling, function(response) {
-    refreshWeather(response.main.temp, units);
-    refreshBackground(response.weather);
-  }, "jsonp");
-}
-
-/**
- * fetchGeoInfo - Will fetch where the current user are, based on her IP
- *
- * @param  {function} callback
- */
-function fetchGeoInfo(callback) {
-  $.get("http://ipinfo.io", function(response) {
-    refreshLocation(response.city + ', '+ response.country);
-    lat = response.loc.split(',')[0];
-    lon = response.loc.split(',')[1];
-    getWeatherInfo(lat, lon, units);
-  }, "jsonp");
-}
+  /**
+   * refreshBackground - Will set the background according to the current
+   * weather type
+   *
+   * @param  {string} weather - the actual weather type
+   */
+  function refreshBackground(weather) {
+    $('section').removeClass().addClass(weather[0].main.toLowerCase());
+  }
 
 
-/**
- * init - Will initialize our tiny script
- *
- */
-function init() {
-  var $button = $('[data-metric-toggle]');
+  /**
+   * getWeatherInfo - Will fetch the actual weather info and refresh
+   *                  the weather and the background when it's done.
+   *
+   * @param  {type} lat  description
+   * @param  {type} lon  description
+   */
+  function getWeatherInfo(lat, lon) {
 
-  fetchGeoInfo();
+    var calling = "https://api.openweathermap.org/data/2.5/weather?lat="
+        +lat+"&lon="+lon+"&units="
+        +(isCelsius?'metric':'imperial')
+        +"&appid=8227b9586af3026fcc2675103a7b5940";
 
-  $button.on('click', function () {
-    if (units == 'metric') {
-      units = 'imperial';
-      $button.text('Show me in Celcius!');
+    $.get(calling, function(response) {
+      cacheValues(response.weather, respones.main.temp, unit);
+      refreshWeather(response.main.temp, units);
+      refreshBackground(response.weather);
+    }, "jsonp");
+  }
+
+  function cacheValues() {
+
+  }
+  /**
+   * fetchGeoInfo - Try to get locational info than cache it.
+   *
+   */
+  function fetchGeoInfo() {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        var getCity = "https://maps.googleapis.com/maps/api/geocode/json?latlng=40.714224,-73.961452&sensor=true";
+        console.warn(pos.coords);
+      })
     } else {
-      units = 'metric';
-      $button.text('Show me in Fahrenheit!');
+      fetchIPInfo();
     }
 
-    getWeatherInfo(lat, lon, units);
-  })
-}
+  }
 
-init();
+
+  function fetchIPInfo() {
+    $.get("http://ipinfo.io", function(response) {
+      refreshLocation(response.city + ', '+ response.country);
+      lat = response.loc.split(',')[0];
+      lon = response.loc.split(',')[1];
+      //getWeatherInfo(lat, lon, unit);
+      cacheValues();
+    }, "jsonp");
+  }
+
+  /**
+   * tryLocation - Try if any location value available and fetch new info
+   * in none available.
+   *
+   * @param  {type} fetchNewCallback description
+   * @return {type}                  description
+   */
+  function tryLocation(fetchNewCallback) {
+    lat = lat || localStorage.getItem('latitude');
+    lon = lon || localStorage.getItem('longitude');
+    city = city || localStorage.getItem('currentCity');
+
+    if (!lat || !lon) {
+      fetchGeoInfo();
+    }
+  }
+
+
+  /**
+   * toggleUnits - Will toggle the units from celsius to Fahrenheit and vica-versa.
+   * Will refresh the weather container as well.
+   *
+   * @param  {Event} clickEvent - the fired clickEvent
+   */
+  function toggleUnits(clickEvent) {
+    $(clickEvent.target).text('Show me in ' + ((isCelsius) ? 'Fahrenheit!' : 'Celsius!'));
+    isCelsius = !isCelsius;
+    refreshWeather(
+      isCelsius ? actualTemp
+      : (actualTemp * 1.8) + 32
+    );
+  }
+  /**
+   * init - Will initialize our tiny script
+   *
+   */
+  function init() {
+    tryLocation();
+    $('[data-metric-toggle]').on('click', toggleUnits);
+  }
+
+  return FeccWeatherModule.init = init;
+})();
+
+
+FeccWeatherModule.init();

@@ -39,11 +39,6 @@ var FeccWeatherModule = {};
    * @param  {type} lon  description
    */
   function getWeatherInfo() {
-    /*var calling = "http://api.openweathermap.org/data/2.5/weather?lat="
-    +lat+"&lon="+lon+"&units="
-    +(isCelsius?'metric':'imperial')
-    +"&appid=8227b9586af3026fcc2675103a7b5940";*/
-
     var calling = "https://api.forecast.io/forecast/de560f58c2bf67a7a0d2c3261e18863a/"+lat+","+lon;
 
     $.get(calling, function(response) {

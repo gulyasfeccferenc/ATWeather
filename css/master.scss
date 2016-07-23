@@ -2,6 +2,7 @@ section {
   height: 100vh;
   width: 100vw;
   position: relative;
+  background-image: url('assets/cloudy_night.png');
   background-size: cover;
   background-position: 50%;
   background-repeat: no-repeat;
@@ -34,12 +35,22 @@ section {
   &.clear-day {
     background-image: url("assets/clear.jpg");
   }
-  &.clouds {
+  &.clear-night {
+    background-image: url("assets/clear_night.png");
+  }
+  &.partly-cloudy-day,
+  &.wind,
+  &.fog,
+  &.cloudy {
     background-image: url('assets/cloudy.jpg');
+  }
+  &.partly-cloudy-night {
+    background-image: url('assets/cloudy_night.png');
   }
   &.rain {
     background-image: url('assets/rainy.gif');
   }
+  &.sleet,
   &.snow {
     background-image: url('assets/snow.png');
   }

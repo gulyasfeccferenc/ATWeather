@@ -4,42 +4,32 @@ var FeccWeatherModule = {};
   var lat,
       lon,
       city,
-      actualTemp = 20,
-      cachedWeather = false,
+      isCached = false,
+      actualTemp,
+      lastWeather,
+      location,
       isCelsius = true; //metric, imperial
 
+
   /**
-   * refreshLocation - will refresh the position's text with the
-   * given location
+   * refreshDOM - Will refresh the dom with the curren set of value
    *
-   * @param  {string} location description
    */
-  function refreshLocation(location) {
+  function refreshDOM() {
+    $('section').removeClass().addClass(lastWeather.toLowerCase());
     $('[data-position]').text(location);
-  }
-
-  /**
-   * refreshWeather - Refresh the current weather output depends on what
-   * unit is selected.
-   *
-   * @param  {string} temp - Actual temperature
-   * @param  {string} unit - metric/imperial
-   */
-  function refreshWeather(temp) {
-    $('[data-weather-container]').text(Math.floor(temp) + (isCelsius?' °C':' °F'));
+    $('[data-weather-container]').text(Math.floor(getCorrectTemp()) + (isCelsius?' °C':' °F'));
   }
 
 
   /**
-   * refreshBackground - Will set the background according to the current
-   * weather type
+   * getCorrectTemp - Convert units to Fahrenheit if necessary
    *
-   * @param  {string} weather - the actual weather type
+   * @return {number}  the temperature in the correct unit
    */
-  function refreshBackground(weather) {
-    $('section').removeClass().addClass(weather[0].main.toLowerCase());
+  function getCorrectTemp() {
+    return isCelsius ? actualTemp : (actualTemp * 1.8) + 32
   }
-
 
   /**
    * getWeatherInfo - Will fetch the actual weather info and refresh
@@ -48,22 +38,35 @@ var FeccWeatherModule = {};
    * @param  {type} lat  description
    * @param  {type} lon  description
    */
-  function getWeatherInfo(lat, lon) {
-
+  function getWeatherInfo() {
     var calling = "https://api.openweathermap.org/data/2.5/weather?lat="
-        +lat+"&lon="+lon+"&units="
-        +(isCelsius?'metric':'imperial')
-        +"&appid=8227b9586af3026fcc2675103a7b5940";
+    +lat+"&lon="+lon+"&units="
+    +(isCelsius?'metric':'imperial')
+    +"&appid=8227b9586af3026fcc2675103a7b5940";
 
     $.get(calling, function(response) {
-      cacheValues(response.weather, respones.main.temp, unit);
-      refreshWeather(response.main.temp, units);
-      refreshBackground(response.weather);
+      lastWeather = response.weather[0].main.toLowerCase();
+      actualTemp = respones.main.temp;
+      cacheValues();
+      refreshDOM();
     }, "jsonp");
   }
 
-  function cacheValues() {
+  function showWeatherInfo() {
+    if (isCached) {
+      refreshDOM();
+    } else {
+      getWeatherInfo();
+    }
+  }
 
+  function cacheValues() {
+    if (lat) localStorage.setItem('latitude', lat);
+    if (lon) localStorage.setItem('longitude', lon);
+    if (location) localStorage.setItem('currentCity', location);
+    if (lastWeather) localStorage.setItem('lastWeather', lastWeather);
+    if (actualTemp) localStorage.setItem('temperature', actualTemp);
+    isCached = true;
   }
   /**
    * fetchGeoInfo - Try to get locational info than cache it.
@@ -72,23 +75,30 @@ var FeccWeatherModule = {};
   function fetchGeoInfo() {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(function(pos) {
-        var getCity = "https://maps.googleapis.com/maps/api/geocode/json?latlng=40.714224,-73.961452&sensor=true";
-        console.warn(pos.coords);
+        log = pos.coords.latitude;
+        lon = pos.coords.longitude;
+        $.get("https://maps.googleapis.com/maps/api/geocode/json?latlng=" + lat + "," + lon, function(response) {
+          console.log(response);
+        })
       })
     } else {
       fetchIPInfo();
     }
-
   }
 
 
+
+  /**
+   * fetchIPInfo - Will fetch the latitude and longitude by ID and call
+   * getWeatherInfo
+   *
+   */
   function fetchIPInfo() {
     $.get("http://ipinfo.io", function(response) {
-      refreshLocation(response.city + ', '+ response.country);
+      location = response.city + ', '+ response.country;
       lat = response.loc.split(',')[0];
       lon = response.loc.split(',')[1];
-      //getWeatherInfo(lat, lon, unit);
-      cacheValues();
+      getWeatherInfo();
     }, "jsonp");
   }
 
@@ -102,10 +112,16 @@ var FeccWeatherModule = {};
   function tryLocation(fetchNewCallback) {
     lat = lat || localStorage.getItem('latitude');
     lon = lon || localStorage.getItem('longitude');
-    city = city || localStorage.getItem('currentCity');
+    location = location || localStorage.getItem('currentCity');
+    actualTemp = actualTemp || localStorage.getItem('temperature');
+    lastWeather = lastWeather || localStorage.getItem('lastWeather');
 
-    if (!lat || !lon) {
+    if (!lat || !lon || !city) {
       fetchGeoInfo();
+    } else if (!actualTemp && !lastWeather) {
+      showWeatherInfo();
+    } else {
+      refreshDOM();
     }
   }
 
@@ -119,10 +135,7 @@ var FeccWeatherModule = {};
   function toggleUnits(clickEvent) {
     $(clickEvent.target).text('Show me in ' + ((isCelsius) ? 'Fahrenheit!' : 'Celsius!'));
     isCelsius = !isCelsius;
-    refreshWeather(
-      isCelsius ? actualTemp
-      : (actualTemp * 1.8) + 32
-    );
+    refreshDOM();
   }
   /**
    * init - Will initialize our tiny script

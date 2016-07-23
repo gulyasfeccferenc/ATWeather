@@ -39,14 +39,16 @@ var FeccWeatherModule = {};
    * @param  {type} lon  description
    */
   function getWeatherInfo() {
-    var calling = "http://api.openweathermap.org/data/2.5/weather?lat="
+    /*var calling = "http://api.openweathermap.org/data/2.5/weather?lat="
     +lat+"&lon="+lon+"&units="
     +(isCelsius?'metric':'imperial')
-    +"&appid=8227b9586af3026fcc2675103a7b5940";
+    +"&appid=8227b9586af3026fcc2675103a7b5940";*/
+
+    var calling = "https://api.forecast.io/forecast/de560f58c2bf67a7a0d2c3261e18863a/"+lat+","+lon;
 
     $.get(calling, function(response) {
-      lastWeather = response.weather[0].main.toLowerCase();
-      actualTemp = response.main.temp;
+      lastWeather = response.currently.icon.toLowerCase();
+      actualTemp = (response.currently.temperature - 32) / 1.8;
       cacheValues();
       refreshDOM();
     }, "jsonp");

@@ -30,7 +30,8 @@ section {
     }
   }
 
-  &.clear {
+  &.clear,
+  &.clear-day {
     background-image: url("assets/clear.jpg");
   }
   &.clouds {

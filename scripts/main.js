@@ -79,7 +79,7 @@ var FeccWeatherModule = {};
         lon = pos.coords.longitude;
         $.get("https://maps.googleapis.com/maps/api/geocode/json?latlng=" + lat + "," + lon, function(response) {
           if (response) {
-            location = response.result[1].formatted_address;
+            location = response.results[1].formatted_address;
             cacheValues();
             refreshDOM();
           }
